@@ -7,83 +7,77 @@
 дать возможность ее сбросить. Для этого рендерим кнопку.
 */
 
+/* Ошибки */
+// При получение данных Users и Оrganizations должен хранится в State
+// Нету Catch в Промисе
+// Html в Array
+// Нету Key user-list-item
+// Organizaition
+
 import React, { Component } from "react";
 import { getUsers, getOrganizations } from "./api";
+import Loading from "./components/loading";
+import UserListItem from "./components/user-list-item";
 
 class App extends Component {
   state = {
+    users: [],
+    organizations: [],
     loading: true,
-    selectedOrg: null
+    selectedOrg: null,
+    selectedOrgId: null,
   };
-  users = [];
-  organizations = [];
+
   componentDidMount() {
     getUsers()
-      .then(users => (this.users = users))
+      .then(users => (this.setState({ users })))
       .then(() => getOrganizations())
-      .then(organizations => (this.organizations = organizations))
-      .then(() => this.setState({ loading: false }));
+      .then(organizations => (this.setState({ organizations })))
+      .then(() => this.setState({ loading: false }))
+      .catch(err => console.log(err));
   }
-
-  selectOrg = org => {
-    this.setState({ selectedOrg: org });
-  };
 
   resetSelectedOrg = () => {
     this.setState({ selectedOrg: false });
   };
 
+  selectOrg = org => {
+    this.setState(() => {
+      return { selectedOrg: true, selectedOrgId: org }
+    });
+  };
+
   render() {
-    if (this.state.loading) {
-      return "Loading...";
+    const { users, organizations, selectedOrg, selectedOrgId, loading } = this.state;
+
+    if (loading) {
+      return <Loading />;
     }
 
-    let users = [];
-
-    for (let i = 0; i < this.users.length; i++) {
-      const name = this.users[i].name;
-      let org;
-
-      for (let j = 0; j < this.organizations.length; j++) {
-        if (this.organizations[j].id === this.users[i].organizaiton) {
-          org = this.organizations[j].name;
+    const UserData = users.filter(
+      usr => {
+        if (selectedOrg) {
+          return usr.organizaiton === selectedOrgId;
+        } else {
+          return usr
         }
-      }
+      })
+      .map(user => {
+        let org = organizations[user.organizaiton].name;
+        return <UserListItem selectOrg={this.selectOrg} key={user.id} user={user} org={org} />
+      });
 
-      users.push(
-        <div className="user-list-item">
-          <div>name: {name}</div>
-          <div onClick={() => this.selectOrg(org)}>org: {org}</div>
-        </div>
-      );
-    }
-
-    if (this.state.selectedOrg) {
-      users = [];
-      for (let i = 0; i < this.users.length; i++) {
-        const orgId = this.organizations.find(
-          o => o.name === this.state.selectedOrg
-        ).id;
-
-        if (this.users[i].organizaiton === orgId) {
-          users.push(
-            <div className="user-list-item">
-              <div>name: {this.users[i].name}</div>
-              <div>org: {this.state.selectedOrg}</div>
-            </div>
-          );
-        }
-      }
-    }
 
     return (
       <div>
-        {this.state.selectedOrg && (
+        {selectedOrg && (
           <button onClick={() => this.resetSelectedOrg()}>
             reset selected org
           </button>
         )}
-        <div className="user-list">{users}</div>
+        <div className="user-list">
+          {UserData}
+        </div>
       </div>
     );
   }

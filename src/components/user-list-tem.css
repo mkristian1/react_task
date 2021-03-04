@@ -1,0 +1,11 @@
+.user-list-item {
+    width: 200px;
+    height: 100px;
+    border: 1px solid;
+    padding: 10px;
+    margin: 10px;
+  }
+
+.user-list-item .company {
+    cursor: pointer;
+}
